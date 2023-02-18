@@ -19,6 +19,49 @@ def get_random_string(length):
     # print random string
     return result_str
 
+def share_exist_files():
+    info = input_group('Share Files', [
+        file_upload("Select files to share:", accept="*", name="files", required=True, multiple=True),
+        input("Your Reference No.", type=TEXT, name='reference', required=True),
+        actions('actions', [
+            {'label': 'Save', 'value': 'save'},
+            {'label': 'Reset', 'type': 'reset', 'color': 'warning'},
+        ], name='action', help_text='actions'),
+    ])
+
+    random_string = info['reference']
+    upload_folder = f'{_root_folder}/{random_string}/'
+    files_source = info['files']
+
+    for file_source in files_source:
+
+        if not os.path.isdir(upload_folder):
+            os.mkdir(upload_folder)
+
+        filename, file_extension = os.path.splitext(file_source['filename'])
+        file_path = f'{upload_folder}{filename}{file_extension}'
+        with open(file_path, "wb") as file:
+            file.write(file_source['content'])
+
+    files = os.listdir(upload_folder)
+    files = [f"{upload_folder}{f}" for f in files if os.path.isfile(f"{upload_folder}{f}")]  # Filtering only the files.
+
+    list_files_table = [['Name', 'Path Download']]
+    for file in files:
+        t_filename, t_file_extension = os.path.splitext(file)
+        head, tail = os.path.split(t_filename)
+        in_file = open(file, "rb")  # opening for [r]eading as [b]inary
+        data_file = in_file.read()  # if you only wanted to read 512 bytes, do .read(512)
+        in_file.close()
+        list_files_table.append([tail, put_file(f'{t_filename}{t_file_extension}', data_file)])
+
+        # Table Output
+    put_table([
+        [put_markdown('**Your Reference No**'), put_markdown(f'`{random_string}`')]
+    ])
+    put_table(list_files_table)
+
+
 
 def share_files():
     random_string = get_random_string(5)
@@ -39,13 +82,14 @@ def share_files():
     files = os.listdir(upload_folder)
     files = [f"{upload_folder}{f}" for f in files if os.path.isfile(f"{upload_folder}{f}")]  # Filtering only the files.
 
-    list_files_table = [['Type', 'Content']]
+    list_files_table = [['Name', 'Path Download']]
     for file in files:
         t_filename, t_file_extension = os.path.splitext(file)
+        head, tail = os.path.split(t_filename)
         in_file = open(file, "rb")  # opening for [r]eading as [b]inary
         data_file = in_file.read()  # if you only wanted to read 512 bytes, do .read(512)
         in_file.close()
-        list_files_table.append([t_filename, put_file(f'{t_filename}{t_file_extension}', data_file)])
+        list_files_table.append([tail, put_file(f'{t_filename}{t_file_extension}', data_file)])
 
         # Table Output
     put_table([
@@ -63,13 +107,14 @@ def open_share():
     files = [f"{download_folder}{f}" for f in files if
              os.path.isfile(f"{download_folder}{f}")]  # Filtering only the files.
 
-    list_files_table = [['Type', 'Content']]
+    list_files_table = [['Name', 'Path Download']]
     for file in files:
         t_filename, t_file_extension = os.path.splitext(file)
+        head, tail = os.path.split(t_filename)
         in_file = open(file, "rb")  # opening for [r]eading as [b]inary
         data_file = in_file.read()  # if you only wanted to read 512 bytes, do .read(512)
         in_file.close()
-        list_files_table.append([t_filename, put_file(f'{t_filename}{t_file_extension}', data_file)])
+        list_files_table.append([tail, put_file(f'{t_filename}{t_file_extension}', data_file)])
 
     # Table Output
     put_table(list_files_table)
@@ -82,18 +127,18 @@ def main():
             $('head').append('<style>.container {max-width: 1080px;}</style>')
             """)
         # Drop-down selection
-        action_type = select('Select Service?', ['New Share Files', 'Open Share Files'])
+        action_type = select('Select Service?', ['New Share Files', 'Open Share Files', 'Share With exist reference'])
 
         if not os.path.isdir(_root_folder):
             os.mkdir(_root_folder)
 
-        Thirty_days_ago = time.time() - (30 * 86400)
+        thirty_days_ago = time.time() - (30 * 86400)
 
         ##
         for i in os.listdir(_root_folder):
             path = os.path.join(_root_folder, i)
 
-            if os.stat(path).st_mtime < Thirty_days_ago:
+            if os.stat(path).st_mtime < thirty_days_ago:
 
                 if os.path.isfile(path):
                     try:
@@ -104,13 +149,14 @@ def main():
                 else:
                     try:
                         shutil.rmtree(path)
-
                     except:
                         print("Could not remove directory:", i)
         ###
 
         if action_type == 'New Share Files':
             share_files()
+        elif action_type == 'Share With exist reference':
+            share_exist_files()
         else:
             open_share()
 

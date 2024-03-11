@@ -126,6 +126,11 @@ def main():
         run_js("""
             $('head').append('<style>.container {max-width: 1080px;}</style>')
             """)
+
+
+        put_markdown("# Experience the arrival of our stunning New Design! 👇")
+        put_markdown("# 🆕 [Click Here 🫵🏼](https://shfiapp.onrender.com)")
+
         # Drop-down selection
         action_type = select('Select Service?', ['New Share Files', 'Open Share Files', 'Share With exist reference'])
 
